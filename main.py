@@ -1,3 +1,4 @@
+# main.py
 from crewai import Crew
 from agents.researcher import ResearchAgent
 from agents.writer import WriterAgent

@@ -1,16 +1,17 @@
+# agents/reviewer.py
 from crewai import Agent
-from models.local_llm import get_local_llm
+from models.local_llm import get_local_llm, load_yaml_config
 
 
 class ReviewerAgent:
     def create(self):
+        config = load_yaml_config()
+        a = config["agents"]["reviewer"]
+
         return Agent(
-            role="Reviewer",
-            goal="Review, refine, and improve tutorials for clarity, grammar, and educational quality",
-            backstory=(
-                "An experienced technical editor who ensures that tutorials are clear, correct, and well-structured "
-                "for readers at all levels, especially beginners."
-            ),
+            role=a["role"],
+            goal=a["goal"],
+            backstory=a["backstory"],
             verbose=True,
             llm=get_local_llm(),
             allow_delegation=False,

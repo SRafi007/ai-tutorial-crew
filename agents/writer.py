@@ -1,16 +1,17 @@
+# agents/writer.py
 from crewai import Agent
-from models.local_llm import get_local_llm
+from models.local_llm import get_local_llm, load_yaml_config
 
 
 class WriterAgent:
     def create(self):
+        config = load_yaml_config()
+        a = config["agents"]["writer"]
+
         return Agent(
-            role="Writer",
-            goal="Create easy-to-understand and engaging tutorials based on research",
-            backstory=(
-                "A professional Python educator and content writer who specializes in "
-                "breaking down complex programming topics into simple, structured tutorials."
-            ),
+            role=a["role"],
+            goal=a["goal"],
+            backstory=a["backstory"],
             verbose=True,
             llm=get_local_llm(),
             allow_delegation=False,
