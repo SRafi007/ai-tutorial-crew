@@ -1,3 +1,5 @@
+# agents/researcher.py
+
 from crewai import Agent
 from models.local_llm import get_local_llm, load_yaml_config
 from tools.web_search import WebSearchTool
