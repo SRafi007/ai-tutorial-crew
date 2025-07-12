@@ -22,32 +22,34 @@ def save_output_to_file(content):
             f.write(str(content))
 
 
-def run():
+def run(topic="Python Lists"):
     llm = get_local_llm()
 
     researcher = ResearchAgent().create()
     writer = WriterAgent().create()
     reviewer = ReviewerAgent().create()
 
-    #  Force override to be safe
+    # Apply LLM override
     researcher.llm = llm
     writer.llm = llm
     reviewer.llm = llm
 
-    tasks = GenerateTutorialTask().create(researcher, writer, reviewer)
+    # Pass topic to task generator
+    tasks = GenerateTutorialTask().create(researcher, writer, reviewer, topic)
 
     crew = Crew(agents=[researcher, writer, reviewer], tasks=tasks, verbose=True)
 
-    print("\n🚀 Running your AI Tutorial Team...\n")
+    print(f"\n🚀 Running your AI Tutorial Team for topic: {topic}...\n")
     result = crew.kickoff()
 
     print("\n📘 Final Output:\n")
     print(result)
 
-    # Save the result
     save_output_to_file(result)
     print(f"\n✅ Output saved to {OUTPUT_FILE}")
 
 
+"""
 if __name__ == "__main__":
     run()
+"""

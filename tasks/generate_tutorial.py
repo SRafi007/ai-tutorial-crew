@@ -2,20 +2,20 @@ from crewai import Task
 
 
 class GenerateTutorialTask:
-    def create(self, researcher, writer, reviewer):
+    def create(self, researcher, writer, reviewer, topic: str):
         return [
             Task(
-                description="Research the topic: Python Lists for Beginners.",
-                expected_output="Key points and examples about Python lists",
+                description=f"Research the topic: {topic}.",
+                expected_output=f"Key points and examples about {topic.lower()}",
                 agent=researcher,
             ),
             Task(
-                description="Write a beginner-friendly tutorial using research output.",
-                expected_output="Full tutorial in markdown",
+                description=f"Write a beginner-friendly tutorial on {topic} using research output.",
+                expected_output=f"Full tutorial on {topic} in markdown format",
                 agent=writer,
             ),
             Task(
-                description="Review the tutorial for clarity and quality.",
+                description=f"Review the {topic} tutorial for clarity and quality.",
                 expected_output="Edited and improved final version",
                 agent=reviewer,
             ),
