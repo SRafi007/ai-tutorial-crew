@@ -9,6 +9,7 @@ import streamlit as st
 from main import run, OUTPUT_FILE
 from utils.input_processor import process_user_input
 import os
+import re
 
 st.set_page_config(page_title="AI Tutorial Generator", layout="centered")
 
@@ -26,63 +27,78 @@ if raw_topic:
     if processed_topic != raw_topic:
         st.info(f"📝 Processed topic: **{processed_topic}**")
 
-# Trigger button
-if st.button("🚀 Generate Tutorial"):
-    # Process the input first
-    final_topic = process_user_input(raw_topic)
+# Initialize session state
+if "tutorial_generated" not in st.session_state:
+    st.session_state.tutorial_generated = False
 
-    # Create a progress container
-    progress_container = st.container()
+if "final_topic" not in st.session_state:
+    st.session_state.final_topic = ""
 
-    with progress_container:
-        st.write(f"🎯 **Target Topic:** {final_topic}")
+# Trigger button - only show if tutorial hasn't been generated yet
+if not st.session_state.tutorial_generated:
+    if st.button("🚀 Generate Tutorial"):
+        # Process the input first
+        st.session_state.final_topic = process_user_input(raw_topic)
 
-        # Create progress bar
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+        # Create a progress container
+        progress_container = st.container()
 
-        # Step 1: Processing Input
-        status_text.text("🔄 Processing and validating input...")
-        progress_bar.progress(10)
+        with progress_container:
+            st.write(f"🎯 **Target Topic:** {st.session_state.final_topic}")
 
-        # Step 2: Initializing Agents
-        status_text.text("🤖 Initializing AI agents and local LLM...")
-        progress_bar.progress(25)
+            # Create progress bar
+            progress_bar = st.progress(0)
+            status_text = st.empty()
 
-        # Step 3: Research Phase
-        status_text.text("🔍 Research Agent: Gathering information and key concepts...")
-        progress_bar.progress(40)
+            # Step 1: Processing Input
+            status_text.text("🔄 Processing and validating input...")
+            progress_bar.progress(10)
 
-        # Step 4: Writing Phase
-        status_text.text("✍️ Writer Agent: Creating tutorial content...")
-        progress_bar.progress(65)
+            # Step 2: Initializing Agents
+            status_text.text("🤖 Initializing AI agents and local LLM...")
+            progress_bar.progress(25)
 
-        # Step 5: Review Phase
-        status_text.text("📋 Reviewer Agent: Checking quality and clarity...")
-        progress_bar.progress(85)
+            # Step 3: Research Phase
+            status_text.text(
+                "🔍 Research Agent: Gathering information and key concepts..."
+            )
+            progress_bar.progress(40)
 
-        # Step 6: Finalizing
-        status_text.text("🎨 Finalizing tutorial and saving output...")
-        progress_bar.progress(95)
+            # Step 4: Writing Phase
+            status_text.text("✍️ Writer Agent: Creating tutorial content...")
+            progress_bar.progress(65)
 
-        # Run the actual generation
-        run(final_topic)
+            # Step 5: Review Phase
+            status_text.text("📋 Reviewer Agent: Checking quality and clarity...")
+            progress_bar.progress(85)
 
-        # Complete
-        progress_bar.progress(100)
-        status_text.text("✅ Tutorial generation completed!")
+            # Step 6: Finalizing
+            status_text.text("🎨 Finalizing tutorial and saving output...")
+            progress_bar.progress(95)
 
-        # Small delay to show completion
-        import time
+            # Run the actual generation
+            run(st.session_state.final_topic)
 
-        time.sleep(1)
+            # Complete
+            progress_bar.progress(100)
+            status_text.text("✅ Tutorial generation completed!")
 
-        # Clear progress indicators
-        progress_bar.empty()
-        status_text.empty()
+            # Small delay to show completion
+            import time
 
-    st.success("🎉 Tutorial Generated Successfully!")
+            time.sleep(1)
 
+            # Clear progress indicators
+            progress_bar.empty()
+            status_text.empty()
+
+        # Hide the button by using session state
+        st.session_state.tutorial_generated = True
+        st.success("🎉 Tutorial Generated Successfully!")
+        st.rerun()
+
+# Show tutorial content if it has been generated
+if st.session_state.tutorial_generated:
     # Display content
     if os.path.exists(OUTPUT_FILE):
         with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
@@ -93,8 +109,29 @@ if st.button("🚀 Generate Tutorial"):
 
             with tab1:
                 st.subheader("📘 Tutorial Preview")
-                # Display markdown content as rendered markdown
-                st.markdown(content)
+
+                # Clean and process the content for better rendering
+                if content.strip():
+                    # Remove any potential BOM or invisible characters
+                    content = content.encode("utf-8").decode("utf-8-sig")
+
+                    # Remove markdown code block wrapper if present
+                    if content.strip().startswith("```markdown"):
+                        # Find the first ```markdown and remove it
+                        content = content.strip()[11:]  # Remove ```markdown
+                        # Find the last ``` and remove it
+                        if content.strip().endswith("```"):
+                            content = content.strip()[:-3]  # Remove closing ```
+
+                    # Clean up any remaining formatting issues
+                    content = content.strip()
+
+                    # Use unsafe_allow_html=True for better rendering
+                    st.markdown(content, unsafe_allow_html=True)
+                else:
+                    st.warning(
+                        "The generated tutorial appears to be empty. Please try generating again."
+                    )
 
                 # Add a separator
                 st.divider()
@@ -113,22 +150,36 @@ if st.button("🚀 Generate Tutorial"):
 
             with tab2:
                 st.subheader("📝 Raw Markdown")
-                st.code(content, language="markdown")
+                # Show raw markdown in a code block
+                st.code(content, language="markdown", line_numbers=True)
 
         # Download button with processed topic name
         st.divider()
 
-        col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
             st.write("**Ready to save your tutorial?**")
         with col2:
             with open(OUTPUT_FILE, "rb") as f:
+                # Create a safe filename
+                safe_filename = re.sub(r"[^\w\s-]", "", st.session_state.final_topic)
+                safe_filename = re.sub(r"[-\s]+", "_", safe_filename)
+
                 st.download_button(
                     label="💾 Download Tutorial",
                     data=f,
-                    file_name=f"{final_topic.replace(' ', '_').replace('/', '_')}_tutorial.md",
+                    file_name=f"{safe_filename}_tutorial.md",
                     mime="text/markdown",
                     use_container_width=True,
                 )
+        with col3:
+            # Add a reset button to generate a new tutorial
+            if st.button("🔄 Generate New", use_container_width=True):
+                st.session_state.tutorial_generated = False
+                st.rerun()
     else:
         st.error("❌ Output file not found. Please try generating the tutorial again.")
+        # Add reset button in case of error
+        if st.button("🔄 Try Again"):
+            st.session_state.tutorial_generated = False
+            st.rerun()
