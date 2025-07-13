@@ -14,7 +14,7 @@ class ResearchAgent:
             role=a["role"],
             goal=a["goal"],
             backstory=a["backstory"],
-            tools=[WebSearchTool.tool()],
+            #       tools=[WebSearchTool.tool()],
             verbose=True,
             llm=get_local_llm(),
         )

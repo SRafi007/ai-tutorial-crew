@@ -9,7 +9,7 @@ from models.local_llm import get_local_llm
 
 
 OUTPUT_DIR = "output"
-OUTPUT_FILE = os.path.join(OUTPUT_DIR, "python_tutorial.md")
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "tutorial.md")
 
 
 def save_output_to_file(content):
@@ -22,7 +22,7 @@ def save_output_to_file(content):
             f.write(str(content))
 
 
-def run(topic="Python Lists"):
+def run(topic):
     llm = get_local_llm()
 
     researcher = ResearchAgent().create()
